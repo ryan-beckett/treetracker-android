@@ -7,8 +7,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.media.ExifInterface;
@@ -156,65 +160,31 @@ public class CameraActivity extends Activity implements PictureCallback, OnClick
         if(bitmap == null){
             return;
         }
+        bitmap = toGrayscale(bitmap);
 
         // Calculate Sharpness - experimental
         // https://stackoverflow.com/questions/21107560/simple-way-to-check-if-an-image-bitmap-is-blur
-        double n1sumR = 0;
-        double n2sumR = 0;
-        double n1sumG = 0;
-        double n2sumG = 0;
-        double n1sumB = 0;
-        double n2sumB = 0;
+        double n1sum = 0;
+        double n2sum = 0;
         for(int y=1;y<bitmap.getHeight();y++) {
             for (int x = 1; x < bitmap.getWidth(); x++) {
                 int pixel0 = bitmap.getPixel(x,y);
                 int pixel1 = bitmap.getPixel(x-1,y);
                 int pixel2 = bitmap.getPixel(x,y-1);
 
-                int A0 = (pixel0 >> 24) & 0xff; // or color >>> 24
-                int R0 = (pixel0 >> 16) & 0xff;
-                int G0 = (pixel0 >>  8) & 0xff;
-                int B0 = (pixel0      ) & 0xff;
-
-                int A1 = (pixel1 >> 24) & 0xff; // or color >>> 24
-                int R1 = (pixel1 >> 16) & 0xff;
-                int G1 = (pixel1 >>  8) & 0xff;
-                int B1 = (pixel1      ) & 0xff;
-
-                int A2 = (pixel2 >> 24) & 0xff; // or color >>> 24
-                int R2 = (pixel2 >> 16) & 0xff;
-                int G2 = (pixel2 >>  8) & 0xff;
-                int B2 = (pixel2      ) & 0xff;
-
-
-                n1sumR= n1sumR + Math.abs(R0-A1) + Math.abs(R0-R2);
-                n2sumR = n2sumR + (double) ( (R0-R1)^2 + (R0-R2)^2 );
-
-                n1sumG= n1sumG + Math.abs(G0-G1) + Math.abs(G0-G2);
-                n2sumG = n2sumG + (double) ( (G0-G1)^2 + (G0-G2)^2 );
-
-                n1sumB= n1sumB + Math.abs(B0-B1) + Math.abs(B0-B2);
-                n2sumB = n2sumB + (double)  ( (B0-B1)^2 + (B0-B2)^2 );
-
+                n1sum= n1sum + Math.abs(pixel0-pixel1) + Math.abs(pixel0-pixel2);
+                n2sum = n2sum + (double) ( (pixel0-pixel1)^2 + (pixel0-pixel2)^2 );
             }
         }
 
         double N_pixel = bitmap.getHeight() * bitmap.getWidth();
-        double n1R = n1sumR / (2 * N_pixel);
-        double n2R = n2sumR / (2 * N_pixel);
-        double blurinessR = n2R / (n1R*n1R);
-        double n1G = n1sumG / (2 * N_pixel);
-        double n2G = n2sumG / (2 * N_pixel);
-        double blurinessG = n2G / (n1G*n1G);
-        double n1B = n1sumB / (2 * N_pixel);
-        double n2B = n2sumB / (2 * N_pixel);
-        double blurinessB = n2B / (n1B*n1B);
-
-        double blurinessMean = (blurinessR + blurinessG + blurinessB) /3 ;
+        double n1 = n1sum / (2 * N_pixel);
+        double n2 = n2sum / (2 * N_pixel);
+        double bluriness = n2 / (n1*n1);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.myDialog));
         builder.setTitle("Blurriness Calculated")
-                .setMessage(String.valueOf(blurinessMean))
+                .setMessage(String.valueOf(bluriness))
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         setPic();
@@ -224,6 +194,23 @@ public class CameraActivity extends Activity implements PictureCallback, OnClick
                 })
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
+    }
+
+    public Bitmap toGrayscale(Bitmap bmpOriginal)
+    {
+        int width, height;
+        height = bmpOriginal.getHeight();
+        width = bmpOriginal.getWidth();
+
+        Bitmap bmpGrayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmpGrayscale);
+        Paint paint = new Paint();
+        ColorMatrix cm = new ColorMatrix();
+        cm.setSaturation(0);
+        ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
+        paint.setColorFilter(f);
+        c.drawBitmap(bmpOriginal, 0, 0, paint);
+        return bmpGrayscale;
     }
 	
 	private void galleryAddPic() throws IOException {
