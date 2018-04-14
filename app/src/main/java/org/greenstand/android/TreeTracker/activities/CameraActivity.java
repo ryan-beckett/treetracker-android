@@ -46,6 +46,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.IntBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -166,7 +167,17 @@ public class CameraActivity extends Activity implements PictureCallback, OnClick
         // https://stackoverflow.com/questions/21107560/simple-way-to-check-if-an-image-bitmap-is-blur
         double n1sum = 0;
         double n2sum = 0;
-        for(int y=1;y<bitmap.getHeight();y++) {
+        IntBuffer buffer = IntBuffer.allocate(bitmap.getHeight() * bitmap.getWidth());
+        bitmap.copyPixelsToBuffer(buffer);
+        for(int i=1; i<(bitmap.getHeight()-1)*bitmap.getWidth(); i++){
+            int pixel0 = buffer.get(i);
+            int pixel1 = buffer.get(i-1);
+            int pixel2 = buffer.get(i+bitmap.getHeight());
+
+            n1sum= n1sum + Math.abs(pixel0-pixel1) + Math.abs(pixel0-pixel2);
+            n2sum = n2sum + ( Math.pow((pixel0-pixel1),2) + Math.pow((pixel0-pixel2),2) );
+        }
+        /*for(int y=1;y<bitmap.getHeight();y++) {
             for (int x = 1; x < bitmap.getWidth(); x++) {
                 int pixel0 = bitmap.getPixel(x,y);
                 int pixel1 = bitmap.getPixel(x-1,y);
@@ -176,24 +187,36 @@ public class CameraActivity extends Activity implements PictureCallback, OnClick
                 n2sum = n2sum + (double) ( (pixel0-pixel1)^2 + (pixel0-pixel2)^2 );
             }
         }
+        */
 
         double N_pixel = bitmap.getHeight() * bitmap.getWidth();
         double n1 = n1sum / (2 * N_pixel);
         double n2 = n2sum / (2 * N_pixel);
         double bluriness = n2 / (n1*n1);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.myDialog));
-        builder.setTitle("Blurriness Calculated")
-                .setMessage(String.valueOf(bluriness))
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        setPic();
-                        safeToTakePicture = true;
-                        savePicture();      //skip picture preview
-                        releaseCamera();                    }
-                })
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
+        if(bluriness > Math.pow(10, -6)) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.myDialog));
+            builder.setTitle("This message appears to be blurry")
+                    .setMessage("Your image appears to be of low quality, and may be unusable.  " + String.valueOf(bluriness))
+                    .setPositiveButton("Use Picture", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            setPic();
+                            safeToTakePicture = true;
+                            savePicture();      //skip picture preview
+                            releaseCamera();
+                        }
+                    })
+                    .setNegativeButton("Retake Picture", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            mCamera.startPreview();
+                            captureButton.setVisibility(View.VISIBLE);
+                            cancelImg.setVisibility(View.VISIBLE);
+                            safeToTakePicture = true;
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+        }
     }
 
     public Bitmap toGrayscale(Bitmap bmpOriginal)
