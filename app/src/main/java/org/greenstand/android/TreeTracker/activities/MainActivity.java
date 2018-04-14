@@ -315,12 +315,13 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
-
+/*
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.e(TAG, "onActivityResult");
         super.onActivityResult(requestCode, resultCode, data);
     }
+*/
 
     /*
      * Called when the Activity is no longer visible at all.

@@ -189,12 +189,6 @@ public class NewTreeFragment extends Fragment implements OnClickListener, TextWa
 					Permissions.MY_PERMISSION_CAMERA);
 		} else {
 			Intent takePictureIntent = new Intent(getActivity(), CameraActivity.class);
-            /*
-			mPhotoUri = getActivity().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, new ContentValues());
-			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-			intent.putExtra(MediaStore.EXTRA_OUTPUT, mPhotoUri);
-			startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE_CONTENT_RESOLVER);
-*/
 			startActivityForResult(takePictureIntent, ValueHelper.INTENT_CAMERA);
 		}
 	}
