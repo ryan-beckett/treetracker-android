@@ -1,9 +1,15 @@
 package org.greenstand.android.TreeTracker.fragments;
 
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -19,24 +25,32 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RadioGroup.OnCheckedChangeListener;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.greenstand.android.TreeTracker.R;
 import org.greenstand.android.TreeTracker.utilities.ValueHelper;
 
+import lib.folderpicker.FolderPicker;
+
 public class SettingsFragment extends Fragment implements OnClickListener, OnCheckedChangeListener, 
 														  TextWatcher {
-	
+
+	private final static int CHOOSE_FILE_REQUESTCODE = 1;
 	private Fragment fragment;
 	private Bundle bundle;
 	private FragmentTransaction fragmentTransaction;
 	private SharedPreferences mSharedPreferences;
+	private Switch storageSwitch;
+	private Button storageBrowseButton;
+	private TextView storagePathTextView;
 
 	public SettingsFragment() {
 		//some overrides and settings go here
@@ -72,6 +86,31 @@ public class SettingsFragment extends Fragment implements OnClickListener, OnChe
 	    ((TextView)getActivity().findViewById(R.id.toolbar_title)).setText(R.string.settings);
 //		((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(R.string.settings);
 		((AppCompatActivity)getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+		storageBrowseButton = (Button) v.findViewById(R.id.fragment_settings_storage_button);
+		storageBrowseButton.setEnabled(false);
+		storageBrowseButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				Intent intent = new Intent(SettingsFragment.this.getContext(), FolderPicker.class);
+				startActivityForResult(intent, CHOOSE_FILE_REQUESTCODE);
+			}
+		});
+
+		storageSwitch = (Switch) v.findViewById(R.id.fragment_settings_storage_switch);
+		storageSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				if(isChecked) {
+					//set storage settings in preferences to use external storage
+					storageBrowseButton.setEnabled(true);
+				}else {
+					//set storage settings in preferences to use system storage
+					storageBrowseButton.setEnabled(false);
+				}
+			}
+		});
+
+		storagePathTextView = (TextView) v.findViewById(R.id.fragment_settings_storage_textview);
 
 	    RadioGroup whichSettings = (RadioGroup) v.findViewById(R.id.fragment_settings_which_settings);
 	    whichSettings.setOnCheckedChangeListener(SettingsFragment.this);
@@ -245,6 +284,17 @@ public class SettingsFragment extends Fragment implements OnClickListener, OnChe
 			break;
 		}
 		
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == CHOOSE_FILE_REQUESTCODE && resultCode == Activity.RESULT_OK) {
+			String path = data.getExtras().getString("data");
+			//TODO Configure storage path here...
+			storagePathTextView.setText(path);
+			Toast.makeText(this.getContext(), "External Storage is set.", Toast.LENGTH_SHORT);
+		}
 	}
 	
 

@@ -37,6 +37,7 @@ import android.widget.Toast;
 import org.apache.http.HttpStatus;
 import org.greenstand.android.TreeTracker.R;
 import org.greenstand.android.TreeTracker.api.Api;
+import org.greenstand.android.TreeTracker.fragments.SettingsFragment;
 import org.greenstand.android.TreeTracker.managers.DataManager;
 import org.greenstand.android.TreeTracker.api.models.responses.UserTree;
 import org.greenstand.android.TreeTracker.application.Permissions;
@@ -251,7 +252,6 @@ public class MainActivity extends AppCompatActivity implements
                     Log.d("MainActivity", "Found fragment: " + fm.getBackStackEntryAt(entry).getName());
                 }
                 return true;
-            /*
             case R.id.action_settings:
                 fragment = new SettingsFragment();
                 bundle = getIntent().getExtras();
@@ -263,7 +263,6 @@ public class MainActivity extends AppCompatActivity implements
                     Log.d("MainActivity", "Found fragment: " + fm.getBackStackEntryAt(entry).getName());
                 }
                 return true;
-                */
             case R.id.action_about:
                 Fragment someFragment = getSupportFragmentManager().findFragmentById(R.id.container_fragment);
 

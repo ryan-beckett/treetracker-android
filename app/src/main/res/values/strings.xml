@@ -123,6 +123,9 @@
 •	This Application is in development. If you have any requests or bug reports please email to  support@treetracker.org\n
 </string>
     <string name="confirm_password">Confirm Password</string>
+    <string name="external_storage">"Use External Storage to Store Images  "</string>
+    <string name="external_storage_path">External Storage Path</string>
+    <string name="browse">Browse</string>
 
 
 </resources>
